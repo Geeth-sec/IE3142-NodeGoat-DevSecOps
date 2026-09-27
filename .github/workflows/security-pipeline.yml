@@ -1,0 +1,110 @@
+# IE3142 DevOps Security
+# DevSecOps Security Pipeline
+# Student ID: IT24100502
+
+name: DevSecOps Security Pipeline
+
+on:
+  push:
+    branches:
+      - master
+      - IT24100502-cicd-security
+
+  pull_request:
+    branches:
+      - master
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+
+  # =====================================================
+  # 1. SAST - Semgrep
+  # =====================================================
+  sast:
+    name: SAST - Semgrep
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Run Semgrep SAST scan
+        run: |
+          docker run --rm \
+            -v "$PWD:/src" \
+            semgrep/semgrep:1.176.0 \
+            semgrep scan --config=auto /src
+
+
+  # =====================================================
+  # 2. Dependency / SCA Scan - npm audit
+  # =====================================================
+  dependency-scan:
+    name: Dependency Scan - npm audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          package-manager-cache: false
+
+      - name: Run npm audit
+        continue-on-error: true
+        run: |
+          npm audit --omit=dev --audit-level=critical
+
+
+  # =====================================================
+  # 3. Secrets Scan - Gitleaks
+  # Blocking security gate
+  # =====================================================
+  secret-scan:
+    name: Secret Scan - Gitleaks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Run Gitleaks secret scan
+        run: |
+          docker run --rm \
+            -v "$PWD:/repo" \
+            zricethezav/gitleaks:v8.30.1 \
+            dir /repo --redact --verbose
+
+
+  # =====================================================
+  # 4. Docker Build + Container Scan - Trivy
+  # =====================================================
+  container-scan:
+    name: Container Scan - Trivy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Build NodeGoat Docker image
+        run: |
+          docker build \
+            -t nodegoat-it24100502:${{ github.sha }} .
+
+      - name: Run Trivy container scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: nodegoat-it24100502:${{ github.sha }}
+          format: table
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          scanners: vuln
+          exit-code: "0"
