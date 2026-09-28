@@ -75,6 +75,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
+      - name: Verify ZAP API key secret injection
+        env:
+          ZAP_API_KEY: ${{ secrets.ZAP_API_KEY }}
+        run: |
+          test -n "$ZAP_API_KEY"
+          echo "ZAP_API_KEY injected securely"
+
       - name: Run Gitleaks secret scan
         run: |
           docker run --rm \
