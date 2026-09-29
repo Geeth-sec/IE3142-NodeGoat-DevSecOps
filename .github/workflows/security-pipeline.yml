@@ -1,6 +1,4 @@
-# IE3142 DevOps Security
-# DevSecOps Security Pipeline
-# Student ID: IT24100502
+
 
 name: DevSecOps Security Pipeline
 
@@ -21,9 +19,7 @@ permissions:
 
 jobs:
 
-  # =====================================================
-  # 1. SAST - Semgrep
-  # =====================================================
+ 
   sast:
     name: SAST - Semgrep
     runs-on: ubuntu-latest
@@ -40,9 +36,7 @@ jobs:
             semgrep scan --config=auto /src
 
 
-  # =====================================================
-  # 2. Dependency / SCA Scan - npm audit
-  # =====================================================
+ 
   dependency-scan:
     name: Dependency Scan - npm audit
     runs-on: ubuntu-latest
@@ -63,10 +57,7 @@ jobs:
           npm audit --omit=dev --audit-level=critical
 
 
-  # =====================================================
-  # 3. Secrets Scan - Gitleaks
-  # Blocking security gate
-  # =====================================================
+  
   secret-scan:
     name: Secret Scan - Gitleaks
     runs-on: ubuntu-latest
@@ -90,9 +81,7 @@ jobs:
             dir /repo --redact --verbose
 
 
-  # =====================================================
-  # 4. Docker Build + Container Scan - Trivy
-  # =====================================================
+ 
   container-scan:
     name: Container Scan - Trivy
     runs-on: ubuntu-latest
