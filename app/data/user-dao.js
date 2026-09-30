@@ -88,9 +88,13 @@ function UserDAO(db) {
             }
         };
 
-        usersCol.findOne({
-            userName: userName
-        }, validateUserDoc);
+       if (typeof userName !== "string" || typeof password !== "string") {
+    return callback(new Error("Invalid input type"), null);
+}
+
+usersCol.findOne({
+    userName: userName
+}, validateUserDoc);
     };
 
     // This is the good one, see the next function
